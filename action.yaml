@@ -31,6 +31,10 @@ inputs:
     description: 'The title of the review'
     required: false
     default: '# Code Review by Groq'
+  inline-comments:
+    description: 'Enable inline comments on specific lines (true/false)'
+    required: false
+    default: 'true'
 
 outputs:
   results:
@@ -58,11 +62,25 @@ runs:
     - name: Run Groq code review
       id: groq
       run: |
-        echo "$REVIEW_TITLE" > review.txt
-        git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | python ${{ github.action_path }}/analyze_code_changes.py >> review.txt
-        echo 'reviewresult<<EOF' >> $GITHUB_OUTPUT
-        echo "$(cat review.txt)" >> $GITHUB_OUTPUT
-        echo 'EOF' >> $GITHUB_OUTPUT
+        # Save diff for line mapping
+        git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} > diff.txt
+        
+        # Run analysis and get JSON output
+        cat diff.txt | python ${{ github.action_path }}/analyze_code_changes.py > reviews.json
+        
+        # Check if inline comments are enabled
+        if [ "$INLINE_COMMENTS" = "true" ]; then
+          # Post inline review comments
+          cat reviews.json | python ${{ github.action_path }}/post_review_comments.py
+          echo "reviewresult=Posted inline review comments" >> $GITHUB_OUTPUT
+        else
+          # Fallback to old-style comment
+          echo "$REVIEW_TITLE" > review.txt
+          python ${{ github.action_path }}/format_review.py < reviews.json >> review.txt
+          echo 'reviewresult<<EOF' >> $GITHUB_OUTPUT
+          echo "$(cat review.txt)" >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+        fi
       shell: bash
       env:
         GROQ_API_KEY: ${{ inputs.groq-key }}
@@ -73,6 +91,11 @@ runs:
         COMMIT_TITLE: ${{ github.event.pull_request.title }}
         COMMIT_BODY: ${{ github.event.pull_request.body }}
         REVIEW_TITLE: ${{ inputs.review-title }}
+        INLINE_COMMENTS: ${{ inputs.inline-comments }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+        DIFF_FILE: diff.txt
 
     - name: Show output in case of failure
       id: err-output
@@ -85,7 +108,7 @@ runs:
       shell: bash
 
     - name: Create comment
-      if: success() || (inputs.post-if-error && inputs.post-if-error != 'false')
+      if: (success() || (inputs.post-if-error && inputs.post-if-error != 'false')) && inputs.inline-comments != 'true'
       uses: peter-evans/create-or-update-comment@v3
       with:
         issue-number: ${{ github.event.pull_request.number }}

@@ -1,6 +1,14 @@
 # Groq Code Review Action
 
-This action uses Groq's fast language models to review code changes in a pull request.
+This action uses Groq's fast language models to review code changes in a pull request with **inline comments, severity levels, and smart suggestions**.
+
+## ✨ Features
+
+- 🎯 **Inline Comments**: Comments on specific lines of code, not just general PR feedback
+- 📊 **Severity Levels**: Issues categorized as Critical (🔴), Warning (🟡), or Suggestion (🟢)
+- 💡 **Smart Suggestions**: Actionable code fixes for each issue
+- ⚡ **Fast**: Powered by Groq's lightning-fast inference
+- 🔧 **Customizable**: Adjust models, prompts, and review style
 
 ## Usage
 
@@ -23,6 +31,8 @@ jobs:
       - uses: vijayabhaskar78/pr-reviewer@v1.0
         with:
           groq-key: ${{ secrets.GROQ_API_KEY }}
+          # Optional parameters:
+          # inline-comments: true  # Enable inline comments (default: true)
           # model: 'llama-3.1-70b-versatile'
           # max-length: 8000
           # prompt: 'Only suggest performance improvements for this code.'
@@ -31,7 +41,7 @@ jobs:
 
 ```
 
-The action will post the Groq review as a comment on the pull request.
+The action will post inline review comments directly on the changed lines in your pull request.
 
 ### Requierements
 
@@ -52,6 +62,28 @@ To post comments in Pull Requests, the job requires additional permissions: `pul
 `post-if-error`: Whether to post a comment if there was an error (optional, with a default `true`).
 
 `review-title`: The title to use for the review comment (optional, with a default `Code Review by Groq`).
+
+`inline-comments`: Enable inline comments on specific lines (optional, with a default `true`). Set to `false` for old-style single comment.
+
+## How It Works
+
+1. **Analysis**: The action fetches the git diff and sends it to Groq's AI
+2. **Structured Review**: Groq returns a structured review with file paths, line numbers, severity levels, and suggestions
+3. **Inline Comments**: The action posts comments directly on the relevant lines in your PR
+4. **Severity Badges**: Each comment is tagged with 🔴 Critical, 🟡 Warning, or 🟢 Suggestion
+
+## Example Review Output
+
+When a review is posted, you'll see:
+
+```
+🔴 CRITICAL
+
+Potential SQL injection vulnerability. User input is directly interpolated into query.
+
+Suggested fix:
+cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+```
 
 ### Limitations
 
