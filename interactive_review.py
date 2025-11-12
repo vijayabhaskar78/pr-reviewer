@@ -68,8 +68,10 @@ def get_comment_thread(comments, comment_id):
 
 def parse_bot_mention(comment_body):
     """Extract the question/command after @pr-reviewer mention"""
-    # Remove @pr-reviewer or @bot mention
-    text = comment_body.replace('@pr-reviewer', '').replace('@bot', '').strip()
+    # Remove @pr-reviewer or @bot mention (case-insensitive)
+    import re
+    text = re.sub(r'@pr-reviewer', '', comment_body, flags=re.IGNORECASE)
+    text = re.sub(r'@bot', '', text, flags=re.IGNORECASE).strip()
     
     # Check for commands
     if text.startswith('/'):
