@@ -71,6 +71,73 @@ To post comments in Pull Requests, the job requires additional permissions: `pul
 2. **Structured Review**: Groq returns a structured review with file paths, line numbers, severity levels, and suggestions
 3. **Inline Comments**: The action posts comments directly on the relevant lines in your PR
 4. **Severity Badges**: Each comment is tagged with 🔴 Critical, 🟡 Warning, or 🟢 Suggestion
+5. **Interactive Mode**: Mention `@pr-reviewer` in any comment to ask questions and get instant help!
+
+## 🤖 Interactive Features
+
+You can have conversations with the AI reviewer! Just mention `@pr-reviewer` in any PR comment:
+
+**Examples:**
+- `@pr-reviewer why is this approach better?`
+- `@pr-reviewer what's wrong with my error handling?`
+- `@pr-reviewer how can I improve performance here?`
+
+**Available Commands:**
+- `/review` - Re-run the full review
+- `/explain [topic]` - Explain a specific part of the code
+- `/security` - Focus on security issues
+- `/performance` - Focus on performance
+- `/tests` - Suggest tests
+- `/help` - Show all commands
+
+To enable interactive mode, add this workflow to your repo as `.github/workflows/interactive-review.yml`:
+
+```yaml
+name: Interactive PR Review
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  interactive-review:
+    if: |
+      (github.event.issue.pull_request || github.event.pull_request) && 
+      (contains(github.event.comment.body, '@pr-reviewer') || 
+       contains(github.event.comment.body, '@bot') ||
+       startsWith(github.event.comment.body, '/'))
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: vijayabhaskar78/pr-reviewer
+          ref: main
+          path: .pr-reviewer
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - run: pip install -r .pr-reviewer/requirements.txt
+      
+      - run: python .pr-reviewer/interactive_review.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          IS_REVIEW_COMMENT: ${{ github.event_name == 'pull_request_review_comment' }}
+```
 
 ## Example Review Output
 

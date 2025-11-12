@@ -1,2 +1,7 @@
-.api_key
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
 .venv
+venv/
