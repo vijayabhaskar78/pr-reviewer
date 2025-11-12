@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-export OPENAI_API_KEY=${OPENAI_API_KEY:-$(cat .api_key)}
-export MODEL=gpt-4o-mini
+export GROQ_API_KEY=${GROQ_API_KEY:-$(cat .api_key)}
+export MODEL=llama-3.1-70b-versatile
 export COMMIT_TITLE=test
 export COMMIT_BODY=test
 export MAX_LENGTH=256

@@ -1,4 +1,4 @@
-# Copyright 2023 Sagi Shnaidman (sshnaidm at gmail.com)
+# Copyright 2025 vijayabhaskar78
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
 # limitations under the License.
 
 import os
-import openai
+from groq import Groq
 import sys
 
-# Set up OpenAI credentials
-if not os.environ.get("OPENAI_API_KEY"):
-    print("No OpenAI API key found")
+# Set up Groq credentials
+if not os.environ.get("GROQ_API_KEY"):
+    print("No Groq API key found")
     sys.exit(1)
 
-client = openai.OpenAI()
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 model_engine = os.environ["MODEL"]
 commit_title = os.environ["COMMIT_TITLE"]
@@ -52,8 +52,8 @@ try:
     if response.choices:
         review_text = response.choices[0].message.content.strip()
     else:
-        review_text = f"No correct answer from OpenAI!\n{response.text}"
+        review_text = f"No correct answer from Groq!\n{response.text}"
 except Exception as e:
-    review_text = f"OpenAI failed to generate a review: {e}"
+    review_text = f"Groq failed to generate a review: {e}"
 
 print(f"{review_text}")

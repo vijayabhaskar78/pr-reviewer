@@ -1,18 +1,18 @@
 # action.yaml
-name: 'OpenAI Code review Github Action'
-author: Sagi (Sergey) Shnaidman (@sshnaidm)
-description: 'A Github Action that posts code review from OpenAI to pull request'
+name: 'Groq Code review Github Action'
+author: vijayabhaskar78
+description: 'A Github Action that posts code review from Groq to pull request'
 inputs:
   github-token:
     description: 'The token used to authenticate with the GitHub API'
     required: false
     default: ${{ github.token }} #${{ secrets.GITHUB_TOKEN }}
   model:
-    description: 'The OpenAI language model to use for code review'
+    description: 'The Groq language model to use for code review'
     required: false
-    default: 'gpt-4.1-mini'
-  openai-key:
-    description: 'The OpenAI API key'
+    default: 'llama-3.1-70b-versatile'
+  groq-key:
+    description: 'The Groq API key'
     required: true
   prompt:
     description: 'The prompt to use for the analysis.'
@@ -30,12 +30,12 @@ inputs:
   review-title:
     description: 'The title of the review'
     required: false
-    default: '# Code Review by OpenAI'
+    default: '# Code Review by Groq'
 
 outputs:
   results:
     description: 'The results of the code review'
-    value: ${{ steps.openai.outputs.reviewresult }}
+    value: ${{ steps.groq.outputs.reviewresult }}
 
 runs:
   using: 'composite'
@@ -55,8 +55,8 @@ runs:
       run: pip install -r ${{ github.action_path }}/requirements.txt
       shell: bash
 
-    - name: Run OpenAI code review
-      id: openai
+    - name: Run Groq code review
+      id: groq
       run: |
         echo "$REVIEW_TITLE" > review.txt
         git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | python ${{ github.action_path }}/analyze_code_changes.py >> review.txt
@@ -65,7 +65,7 @@ runs:
         echo 'EOF' >> $GITHUB_OUTPUT
       shell: bash
       env:
-        OPENAI_API_KEY: ${{ inputs.openai-key }}
+        GROQ_API_KEY: ${{ inputs.groq-key }}
         MODEL: ${{ inputs.model }}
         PROMPT: ${{ inputs.prompt }}
         MAX_LENGTH: ${{ inputs.max-length }}
@@ -90,7 +90,7 @@ runs:
       with:
         issue-number: ${{ github.event.pull_request.number }}
         body: |
-          ${{ steps.openai.outputs.reviewresult && steps.openai.outputs.reviewresult || steps.err-output.outputs.errorresult }}
+          ${{ steps.groq.outputs.reviewresult && steps.groq.outputs.reviewresult || steps.err-output.outputs.errorresult }}
         reactions: '+1'
 
 branding:
